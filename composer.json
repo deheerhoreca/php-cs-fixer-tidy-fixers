@@ -1,0 +1,20 @@
+{
+  "name": "deheerhoreca/php-cs-fixer-tidy-fixers",
+  "description": "Custom PHP CS Fixer rules for tidying code: blank line indentation and blank lines after class opening",
+  "license": "proprietary",
+  "type": "library",
+  "require": {
+    "php": ">=8.3",
+    "friendsofphp/php-cs-fixer": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Chefstore\\Util\\Fixer\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Chefstore\\Util\\Fixer\\Tests\\": "tests/"
+    }
+  }
+}
