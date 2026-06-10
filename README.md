@@ -45,7 +45,7 @@ class Foo {
 
 ### BlankLineAfterClassOpeningFixer
 
-Ensures a configurable number of blank lines appear between the opening brace `{` of a class, interface, or trait and the first content token in its body.
+Ensures a configurable number of blank lines appear between the opening brace `{` of a class, interface, trait, or enum and the first content token in its body.
 
 Standard `PhpCsFixer\Fixer\ClassNotation\NoBlankLinesAfterClassOpeningFixer` is one-directional — it can only *remove* blank lines. This custom fixer fills the missing direction: missing blank lines are *added*; excess blank lines are *stripped*.
 
