@@ -13,7 +13,7 @@ This fixer tracks brace nesting depth and applies appropriate indentation to bla
 **Name**: `Chefstore/blank_line_indentation`
 **Priority**: 15 (runs after blank-line-count fixers but before final formatting)
 
-#### Example
+#### Example (`.` for indentation for clarity)
 
 Before:
 ```php
@@ -22,8 +22,9 @@ Before:
 class Foo {
 
   public function bar() {
+    echo "foo";
 
-    echo "test";
+    echo "bar";
   }
 }
 ```
@@ -33,11 +34,12 @@ After:
 <?php
 
 class Foo {
-  
-  public function bar() {
-    
-    echo "test";
-  }
+..
+..public function bar() {
+....echo "test";
+....
+....echo "bar";
+..}
 }
 ```
 
