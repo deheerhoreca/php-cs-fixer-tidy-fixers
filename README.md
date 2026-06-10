@@ -21,11 +21,11 @@ Before:
 
 class Foo {
 
-  public function bar() {
-    echo "foo";
+..public function bar() {
+....echo "foo";
 
-    echo "bar";
-  }
+....echo "bar";
+..}
 }
 ```
 
