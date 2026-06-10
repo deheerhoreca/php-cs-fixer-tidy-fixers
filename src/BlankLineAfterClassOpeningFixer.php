@@ -16,7 +16,7 @@ use PhpCsFixer\Tokenizer\Tokens;
 
 /**
  * Ensures exactly `blankLineCount` (default 1) blank line appears between
- * the opening brace `{` of a class, interface, or trait and the first
+ * the opening brace `{` of a class, interface, trait, or enum and the first
  * content token in its body.
  *
  * Standard `PhpCsFixer\Fixer\ClassNotation\NoBlankLinesAfterClassOpeningFixer`
@@ -95,7 +95,7 @@ protected \$x;
 ";
 
     return new FixerDefinition(
-      "Ensures a single blank line after the opening brace of a class, interface, or trait.",
+      "Ensures a single blank line after the opening brace of a class, interface, trait, or enum.",
       [new CodeSample($beforeCode)],
       null,
       null
@@ -121,7 +121,7 @@ protected \$x;
   }
 
   protected function applyFix(\SplFileInfo $file, Tokens $tokens): void {
-    foreach ($tokens->findGivenKind([T_CLASS, T_INTERFACE, T_TRAIT]) as $tokenList) {
+    foreach ($tokens->findGivenKind([T_CLASS, T_INTERFACE, T_TRAIT, T_ENUM]) as $tokenList) {
       foreach ($tokenList as $index => $token) {
         $this->maybeFixConstruct($tokens, $token, $index);
       }
@@ -137,7 +137,7 @@ protected \$x;
    * the blank-line rule on its body.
    */
   private function maybeFixConstruct(Tokens $tokens, Token $token, int $index): void {
-    if (!\in_array($token->getId(), [T_CLASS, T_INTERFACE, T_TRAIT], true)) {
+    if (!\in_array($token->getId(), [T_CLASS, T_INTERFACE, T_TRAIT, T_ENUM], true)) {
       return;
     }
 
@@ -150,7 +150,7 @@ protected \$x;
   }
 
   /**
-   * From `$classIndex` (T_CLASS / T_INTERFACE / T_TRAIT), scan forward
+   * From `$classIndex` (T_CLASS / T_INTERFACE / T_TRAIT / T_ENUM), scan forward
    * to find the opening brace `{`.
    *
    * PHP-CS-Fixer tokenises a class as:
