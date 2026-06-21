@@ -14,9 +14,8 @@ use PhpCsFixer\Tokenizer\Tokens;
 /**
  * Indents blank lines to match the indentation level of their surrounding context.
  *
- * This fixer tracks brace nesting depth and applies appropriate indentation
- * to blank lines (whitespace-only lines) to match the indentation of the code
- * block they appear within.
+ * This fixer applies appropriate indentation to blank lines (whitespace-only
+ * lines) to match the indentation of the surrounding code block.
  *
  * ### Examples
  *
@@ -103,10 +102,6 @@ class Foo {
   protected function applyFix(\SplFileInfo $file, Tokens $tokens): void {
     $indentUnit = $this->detectIndentUnit($tokens);
     
-    // First pass: extract indentation from actual code lines
-    $indentMap = $this->buildIndentMap($tokens, $indentUnit);
-    
-    // Second pass: apply indentation to blank lines
     for ($i = 0; $i < count($tokens); $i++) {
       $token = $tokens[$i];
       
@@ -116,6 +111,7 @@ class Foo {
         // Only process if this whitespace spans multiple lines
         if (count($lines) > 1) {
           $newContent = "";
+          $blankLineIndent = $this->getBlankLineIndent($tokens, $i, $lines, $indentUnit);
           
           foreach ($lines as $lineIndex => $line) {
             // Add the newline (except after the last line)
@@ -127,21 +123,12 @@ class Foo {
             if ($lineIndex === count($lines) - 1) {
               $newContent .= $line;
             } else {
-              // This is a blank line (lines between are blank in the output).
-              // Figure out what the next non-blank line's indentation should be.
-              $nextNonWhitespaceIndex = $this->getNextNonWhitespaceIndex($tokens, $i);
-              
-              if ($nextNonWhitespaceIndex !== null) {
-                $nextToken = $tokens[$nextNonWhitespaceIndex];
-                
-                // If the next token is a closing brace, don't indent this blank line
-                if ($nextToken->getContent() === "}") {
-                  // Leave blank
-                } else {
-                  // Get the indentation of the next line from the indentMap
-                  $nextLineIndent = $this->getNextLineIndent($tokens, $i, $indentMap, $indentUnit);
-                  $newContent .= $nextLineIndent;
-                }
+              // The first segment is trailing whitespace on the previous code
+              // line. Only the middle segments are actual blank lines.
+              if ($lineIndex === 0) {
+                $newContent .= $line;
+              } else {
+                $newContent .= $blankLineIndent;
               }
             }
           }
@@ -153,61 +140,56 @@ class Foo {
   }
 
   /**
-   * Build a map of line numbers to their indentation level.
-   * This lets us know what indentation each line should have.
+   * Get the indentation to use for blank lines inside the whitespace token.
+   *
+   * Prefer the indentation that already exists before the next non-whitespace
+   * token. This keeps the fixer compatible with files where PHP-CS-Fixer has
+   * already established correct statement/array indentation. If there is no
+   * next-line indentation yet, fall back to delimiter nesting so missing blank
+   * line indentation can still be added.
    */
-  private function buildIndentMap(Tokens $tokens, string $indentUnit): array {
-    $indentMap = [];
-    $currentLine = 1;
-    $indentLevel = 0;
-    
-    for ($i = 0; $i < count($tokens); $i++) {
-      $token = $tokens[$i];
-      
-      // Track brace depth
-      if ($token->getContent() === "{") {
-        $indentLevel++;
-      } elseif ($token->getContent() === "}") {
-        $indentLevel = max(0, $indentLevel - 1);
-      }
-      
-      // Track newlines and record indentation for each line
-      if ($token->getId() === T_WHITESPACE && strpos($token->getContent(), "\n") !== false) {
-        $currentLine += substr_count($token->getContent(), "\n");
-      } elseif ($token->getId() !== T_WHITESPACE && trim($token->getContent()) !== "") {
-        // This is actual code on a line
-        $indentMap[$currentLine] = str_repeat($indentUnit, $indentLevel);
-      }
-    }
-    
-    return $indentMap;
-  }
-
-  /**
-   * Get the indentation that should be used for the line following the next non-whitespace token.
-   */
-  private function getNextLineIndent(Tokens $tokens, int $currentIndex, array $indentMap, string $indentUnit): string {
+  private function getBlankLineIndent(Tokens $tokens, int $currentIndex, array $lines, string $indentUnit): string {
     $nextNonWhitespaceIndex = $this->getNextNonWhitespaceIndex($tokens, $currentIndex);
-    
+
     if ($nextNonWhitespaceIndex === null) {
       return "";
     }
-    
+
     $nextToken = $tokens[$nextNonWhitespaceIndex];
+
+    // Preserve the old behavior for blank lines immediately before closing
+    // braces: leave them truly blank.
+    if ($nextToken->getContent() === "}") {
+      return "";
+    }
+
+    $nextLineIndent = end($lines);
+
+    if (is_string($nextLineIndent) && preg_match('/^[ \t]+$/', $nextLineIndent) === 1) {
+      return $nextLineIndent;
+    }
     
-    // Count braces to determine indentation level from current position
+    return $this->getDelimiterIndent($tokens, $nextNonWhitespaceIndex, $indentUnit);
+  }
+
+  /**
+   * Count code-block and array delimiters to infer indentation when the next
+   * non-whitespace line is not indented yet.
+   */
+  private function getDelimiterIndent(Tokens $tokens, int $nextNonWhitespaceIndex, string $indentUnit): string {
     $indentLevel = 0;
     
     for ($i = 0; $i < $nextNonWhitespaceIndex; $i++) {
-      if ($tokens[$i]->getContent() === "{") {
+      $content = $tokens[$i]->getContent();
+
+      if ($content === "{" || $content === "[") {
         $indentLevel++;
-      } elseif ($tokens[$i]->getContent() === "}") {
+      } elseif ($content === "}" || $content === "]") {
         $indentLevel = max(0, $indentLevel - 1);
       }
     }
     
-    // If next token is a closing brace, back up one level
-    if ($nextToken->getContent() === "}") {
+    if ($tokens[$nextNonWhitespaceIndex]->getContent() === "]") {
       $indentLevel = max(0, $indentLevel - 1);
     }
     
