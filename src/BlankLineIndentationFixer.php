@@ -135,8 +135,74 @@ class Foo {
           
           $tokens[$i] = new Token([T_WHITESPACE, $newContent]);
         }
+      } elseif ($token->getId() === T_INLINE_HTML) {
+        $newContent = $this->fixInlineHtmlBlankLineIndentation($token->getContent());
+
+        if ($newContent !== $token->getContent()) {
+          $tokens[$i] = new Token([T_INLINE_HTML, $newContent]);
+        }
       }
     }
+  }
+
+  /**
+   * Indent blank lines in inline HTML/JS/CSS segments that sit outside PHP tags.
+   *
+   * PHP-CS-Fixer tokenizes those segments as T_INLINE_HTML rather than
+   * T_WHITESPACE, so the token-based indentation logic above never sees blank
+   * lines inside a <script> or markup block.
+   */
+  private function fixInlineHtmlBlankLineIndentation(string $content): string {
+    if (strpos($content, "\n") === false) {
+      return $content;
+    }
+
+    $lines = explode("\n", $content);
+    $lastIndex = count($lines) - 1;
+
+    for ($lineIndex = 1; $lineIndex < $lastIndex; $lineIndex++) {
+      if (!$this->isBlankLine($lines[$lineIndex])) {
+        continue;
+      }
+
+      $indent = $this->getNextInlineHtmlLineIndent($lines, $lineIndex);
+
+      if ($indent === null) {
+        continue;
+      }
+
+      $lines[$lineIndex] = $indent . (str_ends_with($lines[$lineIndex], "\r") ? "\r" : "");
+    }
+
+    return implode("\n", $lines);
+  }
+
+  private function isBlankLine(string $line): bool {
+    return preg_match('/^[ \t]*\r?$/', $line) === 1;
+  }
+
+  private function getNextInlineHtmlLineIndent(array $lines, int $currentLineIndex): ?string {
+    for ($lineIndex = $currentLineIndex + 1; $lineIndex < count($lines); $lineIndex++) {
+      $line = rtrim($lines[$lineIndex], "\r");
+
+      if (trim($line) === "") {
+        continue;
+      }
+
+      $trimmedLine = ltrim($line, " \t");
+
+      // Preserve the old token-based behavior for blank lines immediately
+      // before closing delimiters: leave them truly blank.
+      if ($trimmedLine[0] === "}" || $trimmedLine[0] === "]") {
+        return null;
+      }
+
+      preg_match('/^[ \t]*/', $line, $matches);
+
+      return $matches[0] ?? "";
+    }
+
+    return null;
   }
 
   /**

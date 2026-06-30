@@ -82,4 +82,38 @@ $assertSame(
   "missing blank-line indentation inside arrays is added"
 );
 
+$assertSame(
+  "<?php if (\$show): ?>
+  <script>
+    (function() {
+      const initialValues = new Map();
+      
+      function getValue(el) {
+        return el.value;
+      }
+      
+      // Capture initial values and insert revert buttons
+      getValue(document.body);
+    })();
+  </script>
+<?php endif; ?>
+",
+  $fix("<?php if (\$show): ?>
+  <script>
+    (function() {
+      const initialValues = new Map();
+
+      function getValue(el) {
+        return el.value;
+      }
+
+      // Capture initial values and insert revert buttons
+      getValue(document.body);
+    })();
+  </script>
+<?php endif; ?>
+"),
+  "blank lines inside inline HTML script blocks are indented"
+);
+
 echo "OK\n";

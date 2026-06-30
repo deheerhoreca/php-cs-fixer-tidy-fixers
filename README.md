@@ -10,6 +10,8 @@ Indents blank lines to match the indentation level of their surrounding context.
 
 This fixer applies appropriate indentation to blank lines (whitespace-only lines) to match the indentation of the surrounding code block. It preserves indentation already established by PHP-CS-Fixer and falls back to delimiter nesting when blank-line indentation is missing.
 
+It also applies line-based blank-line indentation inside inline HTML segments outside PHP tags, such as embedded `<script>` and markup blocks.
+
 **Name**: `Chefstore/blank_line_indentation`
 **Priority**: 15 (runs after blank-line-count fixers but before final formatting)
 
