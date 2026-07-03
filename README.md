@@ -76,6 +76,35 @@ protected $x;
 }
 ```
 
+### NoSpaceAfterControlStructureFixer
+
+Removes the whitespace between a control-structure keyword and its opening parenthesis, turning `if (` into `if(`, `while (` into `while(`, etc.
+
+The native `single_space_around_construct` / `single_space_after_construct` fixers can only *enforce a single space* — they have no option to enforce *zero* space. Omitting a construct from their list makes PHP-CS-Fixer *tolerate* `if(`, but it will not actively rewrite `if (` into `if(`. This fixer fills that gap.
+
+Handled keywords: `if`, `elseif`, `while`, `for`, `foreach`, `switch`, `catch`, `match`. Only inline whitespace (no newline) is removed, so multi-line constructs are left untouched. `function`/`fn` are intentionally not affected.
+
+**Name**: `Chefstore/no_space_after_control_structure`
+**Priority**: 0
+
+#### Example
+
+Before:
+```php
+<?php
+
+if ($a) {
+}
+```
+
+After:
+```php
+<?php
+
+if($a) {
+}
+```
+
 ## Installation
 
 ```bash
@@ -101,6 +130,7 @@ $config
         'Chefstore/blank_line_after_class_opening' => [
             'blankLineCount' => 1,
         ],
+        'Chefstore/no_space_after_control_structure' => true,
     ]);
 
 return $config;
