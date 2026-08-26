@@ -246,16 +246,21 @@ class Foo {
     $indentLevel = 0;
     
     for ($i = 0; $i < $nextNonWhitespaceIndex; $i++) {
-      $content = $tokens[$i]->getContent();
+      $token = $tokens[$i];
+      $content = $token->getContent();
 
-      if ($content === "{" || $content === "[") {
+      if ($token->getId() === T_ATTRIBUTE) {
         $indentLevel++;
-      } elseif ($content === "}" || $content === "]") {
-        $indentLevel = max(0, $indentLevel - 1);
+      } elseif ($token->getId() === null) {
+        if ($content === "{" || $content === "[") {
+          $indentLevel++;
+        } elseif ($content === "}" || $content === "]") {
+          $indentLevel = max(0, $indentLevel - 1);
+        }
       }
     }
     
-    if ($tokens[$nextNonWhitespaceIndex]->getContent() === "]") {
+    if ($tokens[$nextNonWhitespaceIndex]->getId() === null && $tokens[$nextNonWhitespaceIndex]->getContent() === "]") {
       $indentLevel = max(0, $indentLevel - 1);
     }
     

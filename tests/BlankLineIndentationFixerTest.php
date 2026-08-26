@@ -83,6 +83,26 @@ $assertSame(
 );
 
 $assertSame(
+  "<?php
+function first() {
+  \$log[] = \"[{\$source}::{\$attribute}] value\";
+}
+
+/** next */
+function second() {}
+",
+  $fix("<?php
+function first() {
+  \$log[] = \"[{\$source}::{\$attribute}] value\";
+}
+
+/** next */
+function second() {}
+"),
+  "brackets in interpolated strings do not indent following top-level blank lines"
+);
+
+$assertSame(
   "<?php if (\$show): ?>
   <script>
     (function() {
