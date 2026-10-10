@@ -153,45 +153,25 @@ protected \$x;
    * From `$classIndex` (T_CLASS / T_INTERFACE / T_TRAIT / T_ENUM), scan forward
    * to find the opening brace `{`.
    *
-   * PHP-CS-Fixer tokenises a class as:
-   *   T_CLASS  T_WHITESPACE  T_STRING(name)  [T_WHITESPACE
-   *   [T_EXTENDS|T_IMPLEMENTS …]]  LITERAL  '{'
-   *
-   * Literal-brace tokens do not have a numeric token-ID (id=null), so they
-   * must be matched by content, not by `=== '{'`.
+   * The header between the keyword and `{` can hold a name, `extends` /
+   * `implements` lists (plain, qualified or comma-separated names), an enum
+   * backing type (`: string`), and for anonymous classes constructor
+   * arguments in parentheses, which are skipped as a block. `Foo::class` is
+   * already tokenised as CT::T_CLASS_CONSTANT, so it never reaches here.
    */
   private function findOpeningBrace(Tokens $tokens, int $classIndex): ?int {
-    $hasSkippedClassToken = false;
-
     for ($i = $classIndex + 1, $n = count($tokens); $i < $n; $i++) {
-      $id = $tokens[$i]->getId();
-
-      if ($id === T_WHITESPACE) {
-        continue;
-      }
-
-      if ($id === T_STRING && !$hasSkippedClassToken) {
-        $hasSkippedClassToken = true;
-        continue;
-      }
-
-      if (\in_array($id, [T_ABSTRACT, T_FINAL, T_READONLY, T_EXTENDS, T_IMPLEMENTS], true)) {
-        continue;
-      }
-
-      if ($id === T_USE) {
-        continue;
-      }
-
-      if ($id === T_ATTRIBUTE) {
-        continue;
-      }
-
-      if ($tokens[$i]->getContent() === "{") {
+      if ($tokens[$i]->equals("{")) {
         return $i;
       }
 
-      return null;
+      if ($tokens[$i]->equals(";")) {
+        return null;
+      }
+
+      if ($tokens[$i]->equals("(")) {
+        $i = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_PARENTHESIS_BRACE, $i);
+      }
     }
 
     return null;
