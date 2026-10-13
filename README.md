@@ -105,6 +105,35 @@ if($a) {
 }
 ```
 
+### DoubleQuoteExceptRegexFixer
+
+Converts single-quoted strings to double quotes, like the upstream `GD75/double_quote_fixer`, but leaves explicitly single-quoted slash-delimited regular expressions (`/.../flags`) untouched.
+
+Single-quoted regex literals are a common, intentional style (e.g. in mapping definitions that double as PCRE patterns); double-quoting them forces escaping of `$` and `\` characters and hurts readability. This fixer runs the upstream conversion, then restores the regex strings recorded before the pass.
+
+Requires `gd-75/php-cs-fixer-enforce-double-quotes`.
+
+**Name**: `Chefstore/double_quote_except_regex`
+**Priority**: 1
+
+#### Example
+
+Before:
+```php
+<?php
+
+$pattern = '/foo\/bar$/i';
+$name = 'product';
+```
+
+After:
+```php
+<?php
+
+$pattern = '/foo\/bar$/i';
+$name = "product";
+```
+
 ## Installation
 
 ```bash
